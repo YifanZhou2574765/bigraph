@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <link href="style.css" rel="stylesheet" />
+        <meta charset="utf-8">
+        <meta name="viewport" content="user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui">
+        <title>Cytoscape|Bigraph</title>
+        <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    </head>
+    
+    <body>
+        
+        <div id="file_upload">
+            <p> Bigraph Text Format File: <input type="file" id="bigraph_file" style="display:none" onchange="upload();">
+            <input type="button" id="upload" value="upload"></p>
+        </div>
+
+        <pre id="output"></pre>
+       
+        <script>
+            $("#upload").click(
+                function(){ //点击upload按钮，使files触发点击事件，然后完成读取文件的操作
+                    $("#bigraph_file").click();
+                }
+            ); 
+            function upload(){
+                var selectedFile = document.getElementById("bigraph_file").files[0]; //获取读取的file对象
+                var name = selectedFile.name; //读取选中文件的文件名
+                var size = selectedFile.size; //读取选中文件的大小
+                console.log("filename:"+name+"size:"+size);
+
+                /* 读取操作 */
+                var reader = new FileReader(); 
+                reader.readAsText(selectedFile); //读取文件内容
+
+                reader.onload = function(){
+                    console.log(this.result); //当读取完成之后会回调这个函数，然后此时文件的内容存储到了result中
+                    document.getElementById("output").textContent = this.result;
+                };
+            }
+        </script>
+
+        <div id="cy"></div>
+        <script src="code.js"></script>
+       
+    </body>
+</html>

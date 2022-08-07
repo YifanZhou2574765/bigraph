@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <meta charset=utf-8 />
+        <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1">
+        <title>Cytoscape Test</title>
+        <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+    
+    
+        <style>
+            body {
+                font-family: helvetica neue, helvetica, liberation sans, arial, sans-serif;
+            }
+            #cy {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            right: 0;
+            z-index: 1;
+            opacity: 0.7;
+            }
+        </style>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var cy = window.cy = cytoscape({
+                    container: document.getElementById('cy'),
+
+                    style: [
+                        {
+                            selector: 'node',
+                            css: {
+                                'content': 'data(name)',
+                                'color': 'white',
+                                'background-color': '#6699FF',
+                            }
+                        },
+                        {
+                            selector: 'edge',
+                            css: {
+                                'content': 'data(relationship)',
+
+                            }
+                        }
+                    ],
+
+                    elements:{
+                        nodes:[
+                            { data: { id: 'v0', name: 'v1' } },
+                            { data: { id: 'v1', name: 'v2' } },
+                            { data: { id: 'v3', name: 'v3' } },
+                        ],
+                        edges:[
+                            {data: { id: 'e0', relationship:'and', source: 'v0', target: 'v1' } },
+                        ]
+                    },
+
+                    layout:{
+                        name: 'cose',
+                    }
+                });
+            });
+        </script>
+    </head>
+
+
+    <body>
+        <div id="cy"></div>
+    </body>
+
+
+</html>
