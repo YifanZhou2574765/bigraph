@@ -89,8 +89,6 @@
                     var nodeNum = Number(line1.split(" ")[1]);
                     var siteNum = Number(line1.split(" ")[2]);
 
-
-
                     //document.getElementById("output").textContent = "region number:" + regionNum + "; node number:" + nodeNum + "; site number: " + siteNum; //打印第二行信息: regionNum, nodeNum, siteNum
                     
                     /* 邻接矩阵 -- place graph */
@@ -207,7 +205,7 @@
 
                         for(var j=0; j<link.edges.length-1; j++){
                             nodesOfEdges[j] = link.edges[j].replace("\(", ""); //去掉(
-                            nodesOfEdges[j] = nodesOfEdges[j].replace(/\s*/,""); //去掉字符串前空格
+                            nodesOfEdges[j] = nodesOfEdges[j].replace(/\s*/, ""); //去掉字符串前空格
                             nodesOfEdges[j] = nodesOfEdges[j].split(" "); //按照空格分割字符串
 
                             //document.getElementById("output").textContent = nodesOfEdges; //打印nodesOfEdge
@@ -245,6 +243,20 @@
                                 'text-valign': 'top',
                                 'text-halign': 'center',
                             })
+
+                            .selector('edge')
+                            .css({
+                                'label': 'data(name)',
+                                'font-size': 5,
+                            })
+
+                            .selector("node[id^='anchorNode']")
+                            .css({
+                                'content': '',
+                                'height': 1,
+                                'width': 1,
+                            })
+                            
                             
                     });
 
@@ -302,6 +314,7 @@
                             data:{
                                 id: nodePort[e][1] + '_' + nodePort[e][3],  
                                 //name:  //outername?
+                                name: linkSet[nodePort[e][0]][1],
                                 source: nodeSet[Number(nodePort[e][1])][1], //node index
                                 target: nodePort[e][3],
                             }
@@ -310,6 +323,7 @@
 
                     var layout = cy.layout({
                         name: 'concentric',
+                        
                         padding: 5,
                     });
                     layout.run();

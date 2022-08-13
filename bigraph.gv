@@ -1,0 +1,8 @@
+// The Test Bigraph
+digraph bigraph {
+	A [label="Dot A"]
+	B [label="Dot B"]
+	C [label="Dot C"]
+	A -> B
+	A -> C
+}
