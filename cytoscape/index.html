@@ -164,7 +164,7 @@
                     }
                     
 
-                    /* lnik graph */
+                    /* link graph */
                     // 范围: 2+regionNum+nodeNum, lines.length
                     var lineLG = lines.slice(2+regionNum+nodeNum, lines.length); //lines of Link Graph
                     var link = []; //每条边
@@ -178,7 +178,7 @@
                         lineLG[i] = lineLG[i].replace(/[,]/g, " "); //正则表达式去掉所有,
                         lineLG[i] = lineLG[i].split("}"); //按照}分割字符串
 
-                        //link = {innerName:" ", outerName:" ", linkNum:" "}
+                        //link = {innerName:" ", outerName:" ", edges:" ", index:" "}
                         //用link对象存储每个边的信息
                         link["innerName"] = lineLG[i][0].replace("{", "").replace(/\s*/,""); //去掉{和空格
                         link["outerName"] = lineLG[i][1].replace("{", "").replace(/\s*/,""); //去掉{和空格
