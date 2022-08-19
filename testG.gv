@@ -1,0 +1,16 @@
+graph testG {
+	subgraph cluster {
+		label=region0
+		subgraph cluster {
+			label=A
+			subgraph cluster {
+				label=Snd
+				M
+				subgraph cluster {
+					label=Ready
+					Fun
+				}
+			}
+		}
+	}
+}

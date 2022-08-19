@@ -1,10 +1,14 @@
+from contextlib import nullcontext
 from distutils.command.upload import upload
 from distutils.errors import LinkError
 from io import FileIO
 from tkinter import *    # filedialog函数用于上传文件
 from tkinter import filedialog
+from xml.etree.ElementTree import Comment
 from importlib_metadata import NullFinder
 import numpy as np
+from graphviz import *
+import string
 
 ######## 创建交互窗口 -> 用户在窗口选择需要读取的文件  ########
 win = Tk()
@@ -36,7 +40,7 @@ def upload_file_process():
     line0 = line0.split(")") #按照)分割字符串
     
     nodeNum = len(line0)
-    nodeSet = [([0] * 4) for i in range(nodeNum)] # [index, name, linkNum, parentNode]
+    nodeSet = [([0] * 3) for i in range(nodeNum)] # [index, name, linkNum, childrenNodes]
     
     for i in range(len(line0)):
         line0[i] = line0[i].replace("(", "") #去掉(
@@ -47,7 +51,7 @@ def upload_file_process():
         nodeSet[i][0] = i #index
         nodeSet[i][1] = line0[i].split(":")[0] #name
         nodeSet[i][2] = int(line0[i].split(":")[1]) #LinkNum
-        nodeSet[i][3] = " "
+        #nodeSet[i][3] = ""
 
     ######## 第二行：region数目，node数目，site数目 ########
     # 按照空格分开
@@ -56,7 +60,6 @@ def upload_file_process():
     nodeNum = int(line2.split()[1])
     siteNum = int(line2.split()[2])
 
-    #print(regionNum, nodeNum, siteNum)
 
     ######## 邻接矩阵 -- place graph ########
     # 邻接矩阵范围：2 ～ 2+regionNum+nodeNum-1
@@ -70,13 +73,14 @@ def upload_file_process():
    
     rowIndex = [] #邻接矩阵行名称
     columnIndex = [] #邻接矩阵列名称
-    siteSet = [([0] * 3) for i in range(siteNum)] #存放sites (site index, site name, parent node)
+    # siteSet = [([0] * 3) for i in range(siteNum)] #存放sites (site index, site name, parent node)
+    regionSet = [([0] * 2) for i in range(regionNum)] #存放regions (region index, region name, children node)
 
     #将region名称插入rowIndex[]
     if(regionNum != 0):
         for region in range(regionNum):
-            rowIndex.append(region)
-    
+            rowIndex.append("region"+str(region))
+
     #将node名称插入rowIndex[] & columnIndex[]
     if(nodeNum != 0):
         for node in range(nodeNum):
@@ -86,24 +90,25 @@ def upload_file_process():
     #将site名称插入columnIndex[]
     if(siteNum != 0):
         for site in range(siteNum):
-            columnIndex.append(site)
+            columnIndex.append("site"+str(site))
 
     #### 遍历邻接矩阵 ####
-    # 遍历node
-    for r in range(len(rowIndex)): #行 -- parent node
+    #遍历region行, regionSet - [region index, region name, children node]
+    for r in range(regionNum): #行 -- parent node
         for c in range(len(columnIndex)): #列 -- children node
-            if (adjacentMatrix[r][c] == 1): #邻接矩阵元素为1 -> place graph有连接
-                nodeSet[c][3] = rowIndex[r] #rowIndex[r] -> node name -> parent node
-
-
-        for c in range(siteNum): #遍历site列
-            if(adjacentMatrix[r][c] == 1): #邻接矩阵元素为1 -> place graph有连接 ->bigraph有嵌套
-                siteSet[c][0] = c #site index
-                siteSet[c][1] = c #site name
-                siteSet[c][2] = rowIndex[r] #site parent; rowIndex[r] -> node name
-            if(adjacentMatrix[r][c] == 0):
-                siteSet[c][0] = c # site index
-                siteSet[c][1] = c # site name
+            if(adjacentMatrix[r][c] == '1'): #邻接矩阵元素为1 -> place graph有连接
+                regionSet[r][0] = r #region index
+                regionSet[r][1] = "region" + str(r) #region name
+                regionSet[r].append(columnIndex[c]) #columnIndex[c] -> children node
+            if(adjacentMatrix[r][c] == '0'): #邻接矩阵元素为0 -> place graph无连接
+                regionSet[r][0] = r #region index
+                regionSet[r][1] = "region" + str(r) #region name
+    
+    #遍历node
+    for r in range(regionNum, len(rowIndex)):
+        for c in range(len(columnIndex)):
+            if(adjacentMatrix[r][c] == '1'):
+                nodeSet[(r-regionNum)].append(columnIndex[c]) #columnIndex[c] -> children node
 
     ######## link graph ########
     # 范围: 2+regionNum+nodeNum, len(lines)
@@ -137,11 +142,12 @@ def upload_file_process():
                 anchorNodeIndex = "anchorNode" + str(i)
                 # [edge index, node index, port index, anchor node index]
                 nodePort.append([i, nodesOfEdges[j][0], nodesOfEdges[j][1], anchorNodeIndex])
-        
-    print(nodePort)
 
     ######## 画图 ########
+    g = Graph(name="Bigraph", format="png")
+    drawnNode = [] #存储所有已经被添加的node&region
 
+    
 
 
 # upload按钮
