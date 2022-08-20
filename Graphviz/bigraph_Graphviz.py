@@ -145,9 +145,70 @@ def upload_file_process():
 
     ######## 画图 ########
     g = Graph(name="Bigraph", format="png")
+
+    #nodeSetWithoutLinknum [nodeIndex, nodeName, childrenNodes]
+    nodeSetWithoutLinknum = nodeSet
+    for n in range(len(nodeSetWithoutLinknum)):
+        del nodeSetWithoutLinknum[n][2]
+
+    allNode = regionSet + nodeSetWithoutLinknum #regionSet + nodeSet
+    nodeIndex = [node[:2] for node in allNode] #node的序列
     drawnNode = [] #存储所有已经被添加的node&region
 
+    #定义添加节点函数
+    def addGraphNode(currentNode):
+        currentNodeIndex_X = [(i, sub_list.index(currentNode)) for i, sub_list in enumerate(nodeIndex) if currentNode in sub_list][0][0] #当前节点在二维数组allNode中的index_X
+        #currentNodeIndex_Y = [(i, sub_list.index(currentNode)) for i, sub_list in enumerate(nodeIndex) if currentNode in sub_list][0][1] #当前节点在二维数组allNode中的index_Y
+        childrenNodeNum = len(allNode[currentNodeIndex_X]) - 2 #当前节点的childrenNode个数
+        print(currentNode, childrenNodeNum)    
+
+        if(currentNode not in drawnNode): #该节点没有被添加    
+            #当前节点没有childrenNode
+            if(childrenNodeNum == 0):                
+                g.node(currentNode)
+                drawnNode.append(currentNode)
+
+
+            ##当前节点有childrenNode
+            #当前节点只有一个childrenNode
+            if(childrenNodeNum == 1):
+                #with g.subgraph(name='border') as c:
+                with g.subgraph(name='cluster') as c:
+                    c.attr(label=currentNode)
+                    drawnNode.append(currentNode)
+                    print(currentNode + " has 1 childrenNode. Its index is " + str(currentNodeIndex_X))
+                    currentNode = allNode[currentNodeIndex_X][2]
+                    print("currentNode has changed to: " + allNode[currentNodeIndex_X][2])
+                    print("new currentNode index is: ", [(i, sub_list.index(currentNode)) for i, sub_list in enumerate(nodeIndex) if currentNode in sub_list][0][0])
+                    addGraphNode(currentNode)
+                    
+
+            #当前节点有多个childrenNode
+            if(childrenNodeNum > 1):
+                #with g.subgraph(name='border') as c:
+                with g.subgraph(name='cluster') as c:
+                    c.attr(label=currentNode)
+                    drawnNode.append(currentNode)
+                    print(currentNode + " has " + str(childrenNodeNum) + " childrenNode. Its index is " + str(currentNodeIndex_X))
+                    parentNode = currentNode
+                    print("now parent node is: " + parentNode)
+                    for i in range(childrenNodeNum):
+                        # 第一个childrenNode
+                        currentNode = allNode[currentNodeIndex_X][2+i]
+                        print(currentNode + "is the " + str(i) + "th childrenNode")
+                        addGraphNode(currentNode)
+                        drawnNode.append(currentNode)
+                        currentNode = parentNode
+                        print("current node return to " + currentNode)
     
+        
+        return g.view()
+
+    
+    addGraphNode(allNode[0][1]) 
+    
+    #n='A'
+    #print([(i, sub_list.index(n)) for i, sub_list in enumerate(allNode) if n in sub_list][0][0])
 
 
 # upload按钮
@@ -156,6 +217,3 @@ uploadButton.place(x=170, y=180)
 
 # 主循环
 win.mainloop()
-
-
-

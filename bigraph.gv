@@ -1,22 +1,16 @@
 graph Bigraph {
-	subgraph region0 {
-		A
+	M
+	Fun
+	subgraph cluster {
+		label=Ready
 	}
-	subgraph A {
-		Snd
+	subgraph cluster {
+		label=Snd
 	}
-	subgraph Snd {
-		M
+	subgraph cluster {
+		label=A
 	}
-	subgraph Snd {
-		Ready
+	subgraph cluster {
+		label=region0
 	}
-	subgraph Ready {
-		Fun
-	}
-	anchorNode0
-	anchorNode1
-	2 -- anchorNode0
-	0 -- anchorNode1
-	2 -- anchorNode1
 }
