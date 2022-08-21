@@ -40,7 +40,7 @@ def upload_file_process():
     line0 = line0.split(")") #按照)分割字符串
     
     nodeNum = len(line0)
-    nodeSet = [([0] * 3) for i in range(nodeNum)] # [index, name, linkNum, childrenNodes]
+    nodeSet = [([0] * 4) for i in range(nodeNum)] # [index, name, linkNum, parentNodes, childrenNodes]
     
     for i in range(len(line0)):
         line0[i] = line0[i].replace("(", "") #去掉(
@@ -51,7 +51,7 @@ def upload_file_process():
         nodeSet[i][0] = i #index
         nodeSet[i][1] = line0[i].split(":")[0] #name
         nodeSet[i][2] = int(line0[i].split(":")[1]) #LinkNum
-        #nodeSet[i][3] = ""
+        nodeSet[i][3] = "" #parentNodes
 
     ######## 第二行：region数目，node数目，site数目 ########
     # 按照空格分开
@@ -73,8 +73,8 @@ def upload_file_process():
    
     rowIndex = [] #邻接矩阵行名称
     columnIndex = [] #邻接矩阵列名称
-    # siteSet = [([0] * 3) for i in range(siteNum)] #存放sites (site index, site name, parent node)
-    regionSet = [([0] * 2) for i in range(regionNum)] #存放regions (region index, region name, children node)
+    siteSet = [([0] * 3) for i in range(siteNum)] #存放sites (site index, site name, parent node)
+    regionSet = [([0] * 3) for i in range(regionNum)] #存放regions (region index, region name, parentNodes, childrenNodes)
 
     #将region名称插入rowIndex[]
     if(regionNum != 0):
@@ -93,22 +93,44 @@ def upload_file_process():
             columnIndex.append("site"+str(site))
 
     #### 遍历邻接矩阵 ####
-    #遍历region行, regionSet - [region index, region name, children node]
+    #遍历region行, regionSet - [region index, region name, parent node, children node]
     for r in range(regionNum): #行 -- parent node
         for c in range(len(columnIndex)): #列 -- children node
             if(adjacentMatrix[r][c] == '1'): #邻接矩阵元素为1 -> place graph有连接
                 regionSet[r][0] = r #region index
                 regionSet[r][1] = "region" + str(r) #region name
+                regionSet[r][2] = "" #region没有parent node
                 regionSet[r].append(columnIndex[c]) #columnIndex[c] -> children node
             if(adjacentMatrix[r][c] == '0'): #邻接矩阵元素为0 -> place graph无连接
                 regionSet[r][0] = r #region index
                 regionSet[r][1] = "region" + str(r) #region name
+                regionSet[r][2] = "" #region没有parent node
     
-    #遍历node
+    #nodeSet - [index, name, linkNum, parentNodes, childrenNodes]
+    #遍历node -- 添加children node
     for r in range(regionNum, len(rowIndex)):
         for c in range(len(columnIndex)):
-            if(adjacentMatrix[r][c] == '1'):
+            if(adjacentMatrix[r][c] == '1'): #邻接矩阵元素为1 -> place graph有连接
                 nodeSet[(r-regionNum)].append(columnIndex[c]) #columnIndex[c] -> children node
+    #遍历node -- 添加parent node
+    for r in range(len(rowIndex)):
+        for c in range(nodeNum):
+            if(adjacentMatrix[r][c] == '1'): #邻接矩阵元素为1 -> place graph有连接
+                nodeSet[c][3] = rowIndex[r] #rowIndex[r] -> parent node
+   
+    # siteSet - [site index, site name, parent node]
+    #遍历site -- 添加parent node
+    for r in range(len(rowIndex)):
+        for c in range(nodeNum, len(columnIndex)):
+            if(adjacentMatrix[r][c] == '1'): #邻接矩阵元素为1 -> place graph有连接
+                siteSet[c-nodeNum][0] = c-nodeNum
+                siteSet[c-nodeNum][1] = "site"+ str(c-nodeNum)
+                siteSet[c-nodeNum][2] = rowIndex[r] #rowIndex[r] -> parent node
+            if(adjacentMatrix[r][c] == '0'): #邻接矩阵元素为0 -> place graph无连接
+                siteSet[c-nodeNum][0] = c-nodeNum
+                siteSet[c-nodeNum][1] = "site"+ str(c-nodeNum)
+                siteSet[c-nodeNum][2] = "" #parent node为空
+
 
     ######## link graph ########
     # 范围: 2+regionNum+nodeNum, len(lines)
@@ -146,70 +168,65 @@ def upload_file_process():
     ######## 画图 ########
     g = Graph(name="Bigraph", format="png")
 
-    #nodeSetWithoutLinknum [nodeIndex, nodeName, childrenNodes]
+    #nodeSetWithoutLinknum [nodeIndex, nodeName, parentNodes, childrenNodes]
     nodeSetWithoutLinknum = nodeSet
     for n in range(len(nodeSetWithoutLinknum)):
         del nodeSetWithoutLinknum[n][2]
 
-    allNode = regionSet + nodeSetWithoutLinknum #regionSet + nodeSet
+    allNode = regionSet + nodeSetWithoutLinknum + siteSet #regionSet + nodeSet
     nodeIndex = [node[:2] for node in allNode] #node的序列
     drawnNode = [] #存储所有已经被添加的node&region
 
     #定义添加节点函数
-    def addGraphNode(currentNode):
+    def addGraphNode(currentNode, c):
         currentNodeIndex_X = [(i, sub_list.index(currentNode)) for i, sub_list in enumerate(nodeIndex) if currentNode in sub_list][0][0] #当前节点在二维数组allNode中的index_X
         #currentNodeIndex_Y = [(i, sub_list.index(currentNode)) for i, sub_list in enumerate(nodeIndex) if currentNode in sub_list][0][1] #当前节点在二维数组allNode中的index_Y
-        childrenNodeNum = len(allNode[currentNodeIndex_X]) - 2 #当前节点的childrenNode个数
-        print(currentNode, childrenNodeNum)    
+        childrenNodeNum = len(allNode[currentNodeIndex_X]) - 3 #当前节点的childrenNode个数   
 
         if(currentNode not in drawnNode): #该节点没有被添加    
-            #当前节点没有childrenNode
-            if(childrenNodeNum == 0):                
-                g.node(currentNode)
-                drawnNode.append(currentNode)
-
-
             ##当前节点有childrenNode
             #当前节点只有一个childrenNode
             if(childrenNodeNum == 1):
-                #with g.subgraph(name='border') as c:
-                with g.subgraph(name='cluster') as c:
-                    c.attr(label=currentNode)
+                with c.subgraph(name='cluster') as c:
+                    c.attr(label=currentNode, color='black')
                     drawnNode.append(currentNode)
-                    print(currentNode + " has 1 childrenNode. Its index is " + str(currentNodeIndex_X))
-                    currentNode = allNode[currentNodeIndex_X][2]
-                    print("currentNode has changed to: " + allNode[currentNodeIndex_X][2])
-                    print("new currentNode index is: ", [(i, sub_list.index(currentNode)) for i, sub_list in enumerate(nodeIndex) if currentNode in sub_list][0][0])
-                    addGraphNode(currentNode)
-                    
+                    print("CurrentNode: " + currentNode + " has 1 childrenNode. Its index is " + str(currentNodeIndex_X))
+                    currentNode = allNode[currentNodeIndex_X][3] #currentNode更新为其子节点
+                    print("CurrentNode has changed to: " + allNode[currentNodeIndex_X][3] + "; its index is: ", [(i, sub_list.index(currentNode)) for i, sub_list in enumerate(nodeIndex) if currentNode in sub_list][0][0])
+                    addGraphNode(currentNode, c)
+                                        
 
             #当前节点有多个childrenNode
             if(childrenNodeNum > 1):
-                #with g.subgraph(name='border') as c:
-                with g.subgraph(name='cluster') as c:
-                    c.attr(label=currentNode)
+                with c.subgraph(name='cluster') as c:
+                    c.attr(label=currentNode, color='black')
                     drawnNode.append(currentNode)
-                    print(currentNode + " has " + str(childrenNodeNum) + " childrenNode. Its index is " + str(currentNodeIndex_X))
-                    parentNode = currentNode
+                    print("CurrentNode: " + currentNode + " has " + str(childrenNodeNum) + " childrenNode. Its index is " + str(currentNodeIndex_X))
+                    parentNode = currentNode #父节点
                     print("now parent node is: " + parentNode)
                     for i in range(childrenNodeNum):
-                        # 第一个childrenNode
-                        currentNode = allNode[currentNodeIndex_X][2+i]
-                        print(currentNode + "is the " + str(i) + "th childrenNode")
-                        addGraphNode(currentNode)
+                        currentNode = allNode[currentNodeIndex_X][3+i] #currentNode更新为第i个childrenNode
+                        print("CurrentNode: " + currentNode + "is the " + str(i) + "th childrenNode")
+                        addGraphNode(currentNode, c)
                         drawnNode.append(currentNode)
                         currentNode = parentNode
-                        print("current node return to " + currentNode)
-    
-        
-        return g.view()
+                        print("Current node return to " + currentNode)
+                        
+            #当前节点没有childrenNode
+            if(childrenNodeNum == 0):    
+                c.node(currentNode)
+                drawnNode.append(currentNode)
 
-    
-    addGraphNode(allNode[0][1]) 
-    
-    #n='A'
-    #print([(i, sub_list.index(n)) for i, sub_list in enumerate(allNode) if n in sub_list][0][0])
+        return g
 
+
+
+            
+    with g.subgraph(name='cluster') as c:
+        c.attr(color="white")
+        addGraphNode(allNode[0][1], c) 
+    
+    g.view()
 
 # upload按钮
 uploadButton = Button(win, text='Upload', command=upload_file_process)

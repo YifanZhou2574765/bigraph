@@ -1,16 +1,19 @@
 graph Bigraph {
-	M
-	Fun
 	subgraph cluster {
-		label=Ready
-	}
-	subgraph cluster {
-		label=Snd
-	}
-	subgraph cluster {
-		label=A
-	}
-	subgraph cluster {
-		label=region0
+		color=white
+		subgraph cluster {
+			color=black label=region0
+			subgraph cluster {
+				color=black label=A
+				subgraph cluster {
+					color=black label=Snd
+					M
+					subgraph cluster {
+						color=black label=Ready
+						Fun
+					}
+				}
+			}
+		}
 	}
 }

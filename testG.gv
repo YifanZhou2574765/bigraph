@@ -1,7 +1,8 @@
 graph testG {
-	subgraph border {
+	subgraph cluster {
+		color=white
 		subgraph cluster {
-			label=region0
+			color=black label=region0
 			subgraph cluster {
 				label=A
 				subgraph cluster {
