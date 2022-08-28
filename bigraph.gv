@@ -1,19 +1,24 @@
 graph Bigraph {
 	subgraph cluster {
 		color=white
-		subgraph cluster {
-			color=black label=region0
-			subgraph cluster {
-				color=black label=A
-				subgraph cluster {
-					color=black label=Snd
+		subgraph clusterregion0 {
+			color=black
+			subgraph clusterA {
+				color=black
+				subgraph clusterSnd {
+					color=black
 					M
-					subgraph cluster {
-						color=black label=Ready
+					subgraph clusterReady {
+						color=black
 						Fun
 					}
 				}
 			}
 		}
 	}
+	anchorNode0 [label=anchorNode0]
+	anchorNode1 [label=anchorNode1]
+	M -- anchorNode0
+	clusterA -- anchorNode1
+	M -- anchorNode1
 }

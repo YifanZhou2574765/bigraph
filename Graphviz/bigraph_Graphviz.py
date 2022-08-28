@@ -167,6 +167,7 @@ def upload_file_process():
 
     ######## 画图 ########
     g = Graph(name="Bigraph", format="png")
+    g.compound=True #cluster的必要声明
 
     #nodeSetWithoutLinknum [nodeIndex, nodeName, parentNodes, childrenNodes]
     nodeSetWithoutLinknum = nodeSet
@@ -177,8 +178,9 @@ def upload_file_process():
     nodeIndex = [node[:2] for node in allNode] #node的序列
     drawnNode = [] #存储所有已经被添加的node&region
 
+    '''
     #定义添加节点函数
-    def addGraphNode(currentNode, c):
+    def addBigraphNode(currentNode, c):
         currentNodeIndex_X = [(i, sub_list.index(currentNode)) for i, sub_list in enumerate(nodeIndex) if currentNode in sub_list][0][0] #当前节点在二维数组allNode中的index_X
         #currentNodeIndex_Y = [(i, sub_list.index(currentNode)) for i, sub_list in enumerate(nodeIndex) if currentNode in sub_list][0][1] #当前节点在二维数组allNode中的index_Y
         childrenNodeNum = len(allNode[currentNodeIndex_X]) - 3 #当前节点的childrenNode个数   
@@ -193,7 +195,7 @@ def upload_file_process():
                     print("CurrentNode: " + currentNode + " has 1 childrenNode. Its index is " + str(currentNodeIndex_X))
                     currentNode = allNode[currentNodeIndex_X][3] #currentNode更新为其子节点
                     print("CurrentNode has changed to: " + allNode[currentNodeIndex_X][3] + "; its index is: ", [(i, sub_list.index(currentNode)) for i, sub_list in enumerate(nodeIndex) if currentNode in sub_list][0][0])
-                    addGraphNode(currentNode, c)
+                    addBigraphNode(currentNode, c)
                                         
 
             #当前节点有多个childrenNode
@@ -207,7 +209,7 @@ def upload_file_process():
                     for i in range(childrenNodeNum):
                         currentNode = allNode[currentNodeIndex_X][3+i] #currentNode更新为第i个childrenNode
                         print("CurrentNode: " + currentNode + "is the " + str(i) + "th childrenNode")
-                        addGraphNode(currentNode, c)
+                        addBigraphNode(currentNode, c)
                         drawnNode.append(currentNode)
                         currentNode = parentNode
                         print("Current node return to " + currentNode)
@@ -216,16 +218,83 @@ def upload_file_process():
             if(childrenNodeNum == 0):    
                 c.node(currentNode)
                 drawnNode.append(currentNode)
+        return g
+    '''
 
+    def addBigraphNode(currentNode, c):
+        currentNodeIndex_X = [(i, sub_list.index(currentNode)) for i, sub_list in enumerate(nodeIndex) if currentNode in sub_list][0][0] #当前节点在二维数组allNode中的index_X
+        #currentNodeIndex_Y = [(i, sub_list.index(currentNode)) for i, sub_list in enumerate(nodeIndex) if currentNode in sub_list][0][1] #当前节点在二维数组allNode中的index_Y
+        childrenNodeNum = len(allNode[currentNodeIndex_X]) - 3 #当前节点的childrenNode个数   
+
+        if(currentNode not in drawnNode): #该节点没有被添加    
+            ##当前节点有childrenNode
+            #当前节点只有一个childrenNode
+            if(childrenNodeNum == 1):
+                name = 'cluster' + currentNode
+                with c.subgraph(name=name) as c:
+                    c.attr(color='black')
+                    drawnNode.append(currentNode)
+                    print("CurrentNode: " + currentNode + " has 1 childrenNode. Its index is " + str(currentNodeIndex_X))
+                    currentNode = allNode[currentNodeIndex_X][3] #currentNode更新为其子节点
+                    print("CurrentNode has changed to: " + allNode[currentNodeIndex_X][3] + "; its index is: ", [(i, sub_list.index(currentNode)) for i, sub_list in enumerate(nodeIndex) if currentNode in sub_list][0][0])
+                    addBigraphNode(currentNode, c)
+                                        
+
+            #当前节点有多个childrenNode
+            if(childrenNodeNum > 1):
+                name = 'cluster' + currentNode
+                with c.subgraph(name=name) as c:
+                    c.attr(color='black')
+                    drawnNode.append(currentNode)
+                    print("CurrentNode: " + currentNode + " has " + str(childrenNodeNum) + " childrenNode. Its index is " + str(currentNodeIndex_X))
+                    parentNode = currentNode #父节点
+                    print("now parent node is: " + parentNode)
+                    for i in range(childrenNodeNum):
+                        currentNode = allNode[currentNodeIndex_X][3+i] #currentNode更新为第i个childrenNode
+                        print("CurrentNode: " + currentNode + "is the " + str(i) + "th childrenNode")
+                        addBigraphNode(currentNode, c)
+                        drawnNode.append(currentNode)
+                        currentNode = parentNode
+                        print("Current node return to " + currentNode)
+                        
+            #当前节点没有childrenNode
+            if(childrenNodeNum == 0):    
+                c.node(currentNode)
+                drawnNode.append(currentNode)
         return g
 
 
+    def addBigraphAnchorNode(g):
+        for i in range(len(anchorNode)):
+            g.node(name=anchorNode[i], label=anchorNode[i])
+        return g
+
+    def addBigraphEdge(g):
+        for i in range(len(nodePort)):
+            # nodePort[i][1] -- node index
+            # nodePort[i][3] -- anchor node
+            indexOfNode = int(nodePort[i][1])
+            edgeNode1 = nodeSet[indexOfNode][1] #该边连接的第一个点
+            
+            #如果该边连接的点有children node -> node name变为cluster
+            edgeNode1Index = [(i, sub_list.index(edgeNode1)) for i, sub_list in enumerate(nodeIndex) if edgeNode1 in sub_list][0][0] #edgeNode2在二维数组nodeIndex中的index_X
+            if(len(allNode[edgeNode1Index]) > 3): #如果有子节点
+                edgeNode1 = "cluster" + edgeNode1
+
+            edgeNode2 = nodePort[i][3] #该边连接的第二个点
+
+            g.edge(edgeNode1, edgeNode2)
+
+        return g
 
             
     with g.subgraph(name='cluster') as c:
         c.attr(color="white")
-        addGraphNode(allNode[0][1], c) 
-    
+        addBigraphNode(allNode[0][1], c)
+    addBigraphAnchorNode(g)
+    addBigraphEdge(g)
+
+    g.engine = "fdp" # fdp layout支持cluster连接
     g.view()
 
 # upload按钮
