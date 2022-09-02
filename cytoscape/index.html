@@ -21,57 +21,58 @@
 
         <div id="cy"></div>
         
-        <!-- 读取bigraphER text format -->
+        <!-- read bigraphER text format -->
         <script>
-            /**** 读取bigraphER text format ****/
+            /**** read bigraphER text format ****/
             $("#upload").click(
-                function(){ //点击upload按钮，使files触发点击事件，然后完成读取文件的操作
+                function(){ //点击upload按钮，使files触发点击事件，然后完成读取文件的操作//Clicking on the upload button causes files to trigger a click event and then completes the read of the file
                     $("#bigraph_file").click();
                 }
             ); 
             
             function upload(){
-                var selectedFile = document.getElementById("bigraph_file").files[0]; //获取读取的file对象
+                var selectedFile = document.getElementById("bigraph_file").files[0]; //获取读取的file对象 // Get the read file object
 
-                // 空文件/未选择文件
+                // empty file
                 if (selectedFile.length == 0){
                     console.log("Please select a file!")
                 }
 
-                //读取操作
+                //read operation
                 var reader = new FileReader(); 
-                reader.readAsText(selectedFile); //读取文件内容
+                reader.readAsText(selectedFile); //read content of the file
                 
                 
                 reader.onload = function(){
-                    console.log(this.result); //当读取完成之后会回调这个函数，然后此时文件的内容存储到了result中
+                    console.log(this.result); //当读取完成之后会回调这个函数，然后此时文件的内容存储到了result中 // This function is called back when the reading is complete and the contents of the file are then stored in the result
                     
                     // by lines
                     var lines = this.result.split('\n');
 
                     /* 第一行：点的集合 */
+                    /* First line：set of nodes */
                     var line0 = lines[0];
-                    line0 = line0.replace(/^(\s|{)+|(\s|})+$/g, ""); //正则表达式去掉首尾{(  )}
-                    line0 = line0.replace(/[,]/g, ""); //正则表达式去掉所有 ,
-                    line0 = line0.split("\)"); //按照)分割字符串
+                    line0 = line0.replace(/^(\s|{)+|(\s|})+$/g, ""); //正则表达式去掉首尾{(  )} // Regular expressions with the first and last {( )} removed
+                    line0 = line0.replace(/[,]/g, ""); //正则表达式去掉所有 , //Regular expressions remove all ,
+                    line0 = line0.split("\)"); //按照)分割字符串 //Split the string according to)
 
                     var node = [];
                     var nodeSet = [];
                     
                     for(var i=0; i<line0.length-1; i++){ 
-                        line0[i] = line0[i].replace("\(", ""); //去掉(
-                        line0[i] = line0[i].replace(i, ""); //去掉每行的index
-                        line0[i] = line0[i].replace(/\s*/g,""); //去掉所有空格
+                        line0[i] = line0[i].replace("\(", ""); //去掉( //remove (
+                        line0[i] = line0[i].replace(i, ""); //去掉每行的index //remove the index of each line
+                        line0[i] = line0[i].replace(/\s*/g,""); //去掉所有空格 //remove all the space
 
                         //node = {index:" ", name:" ", linkNum:""}
-                        //用node对象存储每个节点的信息
+                        //用node对象存储每个节点的信息 //Store information about each node with a node object
                         node["index"] = i;
                         var flag = line0[i].search(":");
-                        node["name"] = line0[i].slice(0,flag);
+                        node["name"] = line0[i].slice(0,flag) + i;
                         node["linkNum"] = line0[i].slice(flag+1, line0[i].length);
                         
                         
-                        //二维数组nodeSet用来存储所有节点信息
+                        //二维数组nodeSet用来存储所有节点信息 //The two-dimensional array nodeSet is used to store all node information.
                         nodeSet[i] = []; //nodeSet[i] = new Array();
                         for(var j=0; j<3; j++){
                             nodeSet[i][0] = node.index;
@@ -79,20 +80,21 @@
                             nodeSet[i][2] = node.linkNum;
                         }
                     }
-                    //document.getElementById("output").textContent = nodeSet.length; //打印nodeSet
+                    //document.getElementById("output").textContent = nodeSet.length;
 
                     /* 第二行：region数目，node数目，site数目 */
-                    // 按照空格分开
-                    // Number(): string->number(十进制)
+                    /* Second Line：region number，node number，site number */
+                    // 按照空格分开 //split with space
+                    // Number(): string->number(Decimal)
                     var line1 = lines[1];
                     var regionNum = Number(line1.split(" ")[0]);
                     var nodeNum = Number(line1.split(" ")[1]);
                     var siteNum = Number(line1.split(" ")[2]);
 
-                    //document.getElementById("output").textContent = "region number:" + regionNum + "; node number:" + nodeNum + "; site number: " + siteNum; //打印第二行信息: regionNum, nodeNum, siteNum
+                    //document.getElementById("output").textContent = "region number:" + regionNum + "; node number:" + nodeNum + "; site number: " + siteNum; //print the info of 2nd line: regionNum, nodeNum, siteNum
                     
-                    /* 邻接矩阵 -- place graph */
-                    // 邻接矩阵范围：2 ~ 2+regionNum+nodeNum-1
+                    /* Adjacent Matrix -- place graph */
+                    // range: 2 ~ 2+regionNum+nodeNum-1
                     var lineAM = lines.slice(2, 2+regionNum+nodeNum); //lines of Ajdancent Matrix
                     var adjacentMatrix = []; //var adjacentMatrix = new Array();
                     //document.getElementById("output").textContent = adjacentMatrix;
@@ -100,18 +102,18 @@
                         adjacentMatrix[i] = [];
                         //elm = lineAM[i].split(" ");
                         for(var j=0; j<nodeNum+siteNum; j++){
-                            adjacentMatrix[i][j] = lineAM[i].split(" ")[j];
+                            adjacentMatrix[i][j] = lineAM[i][j];
                         }
                     }
 
                     //document.getElementById("output").textContent = adjacentMatrix; //打印adjacentMatrix
 
-                    var rowIndex = []; //邻接矩阵行名称
-                    var columnIndex = []; //邻接矩阵列名称
-                    var siteSet = []; //存放sites (site index, site index, parent node)
+                    var rowIndex = []; //row names of Adjacent Matrix
+                    var columnIndex = []; //column names of Adjacent Matrix
+                    var siteSet = []; //store sites (site index, site index, parent node)
                     
 
-                    // 将region名称插入rowIndex[]
+                    // 将region名称插入rowIndex[] //insert region name into rowIndex[]
                     if(regionNum != 0){
                         for(var i=0; i<regionNum; i++){
                             rowIndex.push(i);
@@ -119,7 +121,7 @@
                     }
                     
 
-                    // 将node名称插入rowIndex[] & columnIndex[]
+                    // 将node名称插入rowIndex[] & columnIndex[] //insert node name into rowIndex[] & columnIndex[]
                     if(nodeNum != 0){
                         for(var i=0; i<nodeNum; i++){
                             rowIndex.push(nodeSet[i][1]);
@@ -127,7 +129,7 @@
                         }
                     }
                     
-                    // 将site名称插入columnIndex[]
+                    // 将site名称插入columnIndex[] //insert site name into colunmIndex[]
                     if(siteNum != 0){
                         for(var i=0; i<siteNum; i++){
                             columnIndex.push(i);
@@ -136,26 +138,26 @@
                     //document.getElementById("output").textContent = rowIndex; //rowInde: 0,A,Snd,M,Ready,Fun
                     //document.getElementById("output").textContent = columnIndex; // columnIndex: A,Snd,M,Ready,Fun
 
-                    // 遍历邻接矩阵
+                    // Traversing the adjacency matrix
 
-                    // 遍历node
-                    for(var r=0; r<rowIndex.length; r++){ //行 -- parent node
-                        for(var c=0; c<nodeNum; c++){ //node列 -- children node
-                            if(adjacentMatrix[r][c] == 1){ //邻接矩阵元素为1 -> place graph有连接 -> bigraph有嵌套
+                    // Traversing the node
+                    for(var r=0; r<rowIndex.length; r++){ //row -- parent node
+                        for(var c=0; c<nodeNum; c++){ //node column -- children node
+                            if(adjacentMatrix[r][c] == 1){ //邻接矩阵元素为1 -> place graph有连接 -> bigraph有嵌套 //adjacency matrix with element 1 -> place graph is connected -> bigraph is nested
                                 nodeSet[c][3] = rowIndex[r]; //rowIndex[r] -> node name
                                 
                             }
                         }
                         
 
-                        for(var c=nodeNum; c<columnIndex.length; c++){ //site列 -- children node
+                        for(var c=nodeNum; c<columnIndex.length; c++){ //site column -- children node
                             siteSet[c-nodeNum] = [];
-                            if(adjacentMatrix[r][c] == 1){ //邻接矩阵元素为1 -> place graph有连接 -> bigraph有嵌套
+                            if(adjacentMatrix[r][c] == 1){ //邻接矩阵元素为1 -> place graph有连接 -> bigraph有嵌套 //adjacency matrix with element 1 -> place graph is connected -> bigraph is nested
                                 siteSet[c-nodeNum][0] = c-nodeNum;
                                 siteSet[c-nodeNum][1] = c-nodeNum;
                                 siteSet[c-nodeNum][2] = rowIndex[r]; //rowIndex[r] -> node name
                             }
-                            if(adjacentMatrix[r][c] == 0){ // 邻接矩阵元素为0 -> place graph无连接 -> bigraph无嵌套
+                            if(adjacentMatrix[r][c] == 0){ // 邻接矩阵元素为0 -> place graph无连接 -> bigraph无嵌套 //adjacency matrix with element 0 -> place graph is not connected -> bigraph is not nested
                                 siteSet[c-nodeNum][0] = c-nodeNum;
                                 siteSet[c-nodeNum][1] = c-nodeNum; 
                             }
@@ -165,67 +167,68 @@
                     
 
                     /* link graph */
-                    // 范围: 2+regionNum+nodeNum, lines.length
+                    // range: 2+regionNum+nodeNum, lines.length
                     var lineLG = lines.slice(2+regionNum+nodeNum, lines.length); //lines of Link Graph
-                    var link = []; //每条边
-                    var linkSet = []; //所有边
+                    var link = []; //每条边 //every edge
+                    var linkSet = []; //所有边 // all edge
                     var anchorNode = []; 
-                    var nodesOfEdges = []; //边所连接的点
-                    var nodePort = []; //输出的边所连接的点(edge index, node index, port index, anchor node index)
+                    var nodesOfEdges = []; //边所连接的点 //The nodes to which the edge is attached
+                    var nodePort = []; //The nodes to which the output edge is connected(edge index, node index, port index, anchor node index)
                     
                     for(var i=0; i<lineLG.length; i++){
-                        lineLG[i] = lineLG[i].replace(/^(\s|\()+|(\s|\))+$/g, ""); //正则表达式去掉首尾( )
-                        lineLG[i] = lineLG[i].replace(/[,]/g, " "); //正则表达式去掉所有,
-                        lineLG[i] = lineLG[i].split("}"); //按照}分割字符串
+                        lineLG[i] = lineLG[i].replace(/^(\s|\()+|(\s|\))+$/g, ""); //正则表达式去掉首尾( ) // Regular expressions remove the first and last ( )
+                        lineLG[i] = lineLG[i].replace(/[,]/g, " "); //正则表达式去掉所有, // Regular expressions remove all ,
+                        lineLG[i] = lineLG[i].split("}"); //按照}分割字符串 //split the string with }
 
                         //link = {innerName:" ", outerName:" ", edges:" ", index:" "}
-                        //用link对象存储每个边的信息
-                        link["innerName"] = lineLG[i][0].replace("{", "").replace(/\s*/,""); //去掉{和空格
-                        link["outerName"] = lineLG[i][1].replace("{", "").replace(/\s*/,""); //去掉{和空格
-                        link["edges"] = lineLG[i][2].replace("{", "").replace(/\s*/,""); //去掉{和空格
+                        //用link对象存储每个边的信息 //Store information about each edge with a link object
+                        link["innerName"] = lineLG[i][0].replace("{", "").replace(/\s*/,""); //去掉{和空格 //remove { & space
+                        link["outerName"] = lineLG[i][1].replace("{", "").replace(/\s*/,""); //去掉{和空格 //remove { & space
+                        link["edges"] = lineLG[i][2].replace("{", "").replace(/\s*/,""); //去掉{和空格 //remove { & space
                         link["index"] = i;
                         anchorNode.push("anchorNode"+i);
                         
-                        //document.getElementById("output").textContent = "index: " + link.index + "\n" + "Inner Name:" + link.innerName + "\nOuter Name:" + link.outerName + "\nEdges:" + link.edges; //打印link
+                        //document.getElementById("output").textContent = "index: " + link.index + "\n" + "Inner Name:" + link.innerName + "\nOuter Name:" + link.outerName + "\nEdges:" + link.edges; //print link
 
-                        //二维数组linkSet存储所有边的信息
-                        linkSet[i] = []; //用new Array()创建二维数组
+                        //二维数组linkSet存储所有边的信息 //The two-dimensional array linkSet stores information about all edges
+                        linkSet[i] = []; //用new Array()创建二维数组 // Create two-dimensional arrays with new Array()
                         linkSet[i][0] = link.innerName;
                         linkSet[i][1] = link.outerName;
                         linkSet[i][2] = link.edges;
                         linkSet[i][3] = link.index;
 
-                        //document.getElementById("output").textContent = "index: " + linkSet[i][3] + "\n" + "Inner Name: " + linkSet[i][0] + "\n" + "Outer Name: " + linkSet[i][1] + "\n" + "Edges: " + linkSet[i][2]; //打印linkSet                                       
+                        //document.getElementById("output").textContent = "index: " + linkSet[i][3] + "\n" + "Inner Name: " + linkSet[i][0] + "\n" + "Outer Name: " + linkSet[i][1] + "\n" + "Edges: " + linkSet[i][2]; //print linkSet                                       
                         
-                        //处理link.edges <-- 不止一个node  
-                        link.edges = link.edges.split("\)"); //按照)分割字符串
-                        //document.getElementById("output").textContent = link.edges; //打印nodesOfEdges
+                        //deal with link.edges <-- more than one node  
+                        link.edges = link.edges.split("\)"); //按照)分割字符串 // use ) split the string 
+                        //document.getElementById("output").textContent = link.edges; //print nodesOfEdges
 
                         
 
                         for(var j=0; j<link.edges.length-1; j++){
-                            nodesOfEdges[j] = link.edges[j].replace("\(", ""); //去掉(
-                            nodesOfEdges[j] = nodesOfEdges[j].replace(/\s*/, ""); //去掉字符串前空格
-                            nodesOfEdges[j] = nodesOfEdges[j].split(" "); //按照空格分割字符串
+                            nodesOfEdges[j] = link.edges[j].replace("\(", ""); //去掉( //remove ()
+                            nodesOfEdges[j] = nodesOfEdges[j].replace(/\s*/, ""); //去掉字符串前空格 //Remove spaces before strings 
+                            nodesOfEdges[j] = nodesOfEdges[j].split(" "); //按照空格分割字符串 //split strings with space
 
-                            //document.getElementById("output").textContent = nodesOfEdges; //打印nodesOfEdge
+                            //document.getElementById("output").textContent = nodesOfEdges; //print nodesOfEdge
                             
                             for(var k=0; k<nodesOfEdges[j].length-1; k++){
                                 var anchorNodeIndex = "anchorNode" + link.index;
-                                nodePort.push([link.index, nodesOfEdges[j][0], nodesOfEdges[j][1], anchorNodeIndex]);
+                                //nodePort.push([link.index, nodesOfEdges[j][0], nodesOfEdges[j][1], anchorNodeIndex]);
                                 //document.getElementById("output").textContent = link.index + nodesOfEdges[j][0]+ nodesOfEdges[j][1];
                             }
+                            nodePort.push([link.index, nodesOfEdges[j][0], nodesOfEdges[j][1], anchorNodeIndex]);
                         }
                     }
                     //document.getElementById("output").textContent = linkSet; 
                     //document.getElementById("output").textContent = link.edges;
                     //document.getElementById("output").textContent = nodesOfEdges;
                     //document.getElementById("output").textContent = nodePort;
-                    document.getElementById("output").textContent = nodeSet;
+                    //document.getElementById("output").textContent = nodeSet;
                     //document.getElementById("output").textContent = anchorNode;
 
                
-                    /* 画图 */
+                    /* drawing the bigraph */
                     let cy = cytoscape({
                         container: document.getElementById('cy'),
 
@@ -270,7 +273,7 @@
                         })
                     }
 
-                    //添加node
+                    //add node
                     for(var n=0; n<nodeNum; n++){
                         cy.add({
                             group: 'nodes',
@@ -279,10 +282,9 @@
                                 parent: nodeSet[n][3],
                             }
                         });  
-                         
                     }
 
-                    //添加site
+                    //add site
                     for(var s=0; s<siteNum; s++){
                         cy.add({
                             group: 'nodes',
@@ -293,8 +295,8 @@
                         });
                     }
 
-                    //添加anchorNode
-                    //问题：port of node 
+                    //add anchorNode
+                    //document.getElementById("output").textContent = anchorNode.length;
                     for(var a=0; a<anchorNode.length; a++){
                         cy.add({
                             group: 'nodes',
@@ -304,16 +306,14 @@
                         })
                     }
 
-
-                    //添加edge
+                    //add edge
                     //document.getElementById("output").textContent = nodePort.length; //3
                     for(var e=0; e<nodePort.length; e++){
-                        //添加edge
+                        //add edge
                         cy.add({
                             group: 'edges',
                             data:{
-                                id: nodePort[e][1] + '_' + nodePort[e][3],  
-                                //name:  //outername?
+                                //id: nodePort[e][1] + '_' + nodePort[e][3],  
                                 name: linkSet[nodePort[e][0]][1],
                                 source: nodeSet[Number(nodePort[e][1])][1], //node index
                                 target: nodePort[e][3],
@@ -323,17 +323,13 @@
 
                     var layout = cy.layout({
                         name: 'concentric',
-                        
+                        //name: 'cose',
+                        //name: 'grid',
                         padding: 5,
                     });
                     layout.run();
-                    
-                }  
-                
-                
+                }
             }        
-
-            
 
 
         </script>
